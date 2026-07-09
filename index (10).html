@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#101418">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Training">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Training Logboek</title>
+<style>
+  :root{
+    --bg:#101418; --card:#1A2027; --card-2:#222A33; --line:#2C3540;
+    --oranje:#FF6B1A; --oranje-dim:rgba(255,107,26,.14);
+    --groen:#3DD68C; --groen-dim:rgba(61,214,140,.14);
+    --tekst:#E8ECEF; --stil:#8A94A0; --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg);color:var(--tekst);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;min-height:100%}
+  body{padding:16px 14px 90px;max-width:520px;margin:0 auto}
+
+  header{margin-bottom:14px}
+  .eyebrow{font-weight:700;letter-spacing:.18em;font-size:11px;color:var(--oranje);text-transform:uppercase}
+  h1{font-weight:800;font-size:26px;line-height:1.05;text-transform:uppercase;letter-spacing:.01em;margin-top:2px}
+  .datum{color:var(--stil);font-size:13px;margin-top:4px}
+  #installKnop{display:none;margin-top:10px;width:100%;background:var(--oranje-dim);border:1px solid var(--oranje);color:var(--oranje);font-weight:700;font-size:14px;padding:11px;border-radius:10px;cursor:pointer}
+
+  .tabs{display:flex;gap:5px;margin:16px 0 14px;background:var(--card);padding:5px;border-radius:12px;overflow-x:auto}
+  .tab{flex:1 0 auto;border:none;background:transparent;color:var(--stil);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.03em;padding:10px 10px;border-radius:9px;cursor:pointer;white-space:nowrap}
+  .tab.actief{background:var(--oranje);color:#141414}
+
+  .oef{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+  .oef-kop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .oef-naam{font-weight:700;font-size:17px;text-transform:uppercase;letter-spacing:.01em}
+  .oef-doel{font-size:12px;color:var(--stil);white-space:nowrap;font-weight:600}
+  .vorige{margin-top:6px;font-size:13px;color:var(--stil);line-height:1.4}
+  .vorige b{color:var(--tekst);font-weight:600}
+  .vorige .datum-tag{color:var(--stil);font-size:12px}
+  .vorige .hint{color:var(--groen);font-weight:600}
+  .notitie-vorig{margin-top:4px;font-size:12px;color:var(--stil);font-style:italic}
+  .notitie-vorig b{color:var(--tekst);font-style:normal}
+  .sets{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+  .set-rij{display:grid;grid-template-columns:30px 1fr 1fr 34px;gap:8px;align-items:center}
+  .set-nr{font-weight:700;font-size:14px;color:var(--stil);text-align:center}
+  .veld{position:relative}
+  .veld input{width:100%;background:var(--card-2);border:1px solid var(--line);border-radius:9px;color:var(--tekst);font-weight:600;font-size:16px;padding:10px 36px 10px 12px;outline:none}
+  .veld input:focus{border-color:var(--oranje)}
+  .veld .unit{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--stil);pointer-events:none}
+  .set-x{border:none;background:transparent;color:var(--stil);font-size:18px;cursor:pointer;padding:6px}
+  .set-plus{margin-top:9px;width:100%;background:transparent;border:1px dashed var(--line);color:var(--stil);border-radius:9px;padding:9px;font-weight:600;font-size:13px;cursor:pointer}
+  .notitie-veld{margin-top:9px}
+  .notitie-veld input{width:100%;background:var(--card-2);border:1px solid var(--line);border-radius:9px;color:var(--tekst);font-weight:500;font-size:14px;padding:9px 12px;outline:none}
+  .notitie-veld input:focus{border-color:var(--oranje)}
+  .notitie-veld input::placeholder{color:var(--stil)}
+
+  .opslaan{position:fixed;bottom:0;left:0;right:0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg) 65%,transparent);max-width:520px;margin:0 auto}
+  .opslaan button{width:100%;background:var(--oranje);border:none;color:#141414;font-weight:800;font-size:17px;text-transform:uppercase;letter-spacing:.06em;padding:15px;border-radius:12px;cursor:pointer}
+  .opslaan button:disabled{opacity:.5}
+  .opslaan .bewerk-info{text-align:center;font-size:12px;color:var(--stil);margin-bottom:8px}
+
+  .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-90px);background:var(--groen);color:#0d1a12;font-weight:700;font-size:14px;padding:10px 20px;border-radius:99px;transition:transform .3s;z-index:20;white-space:nowrap}
+  .toast.zien{transform:translateX(-50%) translateY(0)}
+
+  .hist-item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+  .hist-kop{display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+  .hist-dag{font-weight:700;font-size:16px;text-transform:uppercase}
+  .hist-datum{font-size:13px;color:var(--stil)}
+  .hist-body{display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+  .hist-item.open .hist-body{display:block}
+  .hist-oef{margin-bottom:8px;font-size:14px}
+  .hist-oef .n{font-weight:600}
+  .hist-oef .s{color:var(--stil)}
+  .hist-oef .note{color:var(--stil);font-style:italic;font-size:13px}
+  .hist-acties{display:flex;gap:8px;margin-top:6px}
+  .hist-acties button{background:var(--card-2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--tekst)}
+  .hist-acties .verwijder{color:#e05c5c}
+  .leeg{text-align:center;color:var(--stil);padding:40px 20px;font-size:15px;line-height:1.5}
+
+  .sectie-titel{font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.04em;margin:4px 2px 10px;color:var(--stil)}
+
+  .prog-select{width:100%;background:var(--card);border:1px solid var(--line);color:var(--tekst);font-size:15px;font-weight:600;padding:12px;border-radius:10px;margin-bottom:14px}
+  .prog-kaart{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+  .prog-stat{display:flex;justify-content:space-between;margin-bottom:12px}
+  .prog-stat .blok{text-align:center;flex:1}
+  .prog-stat .getal{font-size:22px;font-weight:800;color:var(--oranje)}
+  .prog-stat .label{font-size:11px;color:var(--stil);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+  svg.grafiek{width:100%;height:180px;display:block}
+  .grafiek-leeg{text-align:center;color:var(--stil);padding:30px 10px;font-size:14px;line-height:1.5}
+
+  .timer-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px 16px;text-align:center;margin-bottom:16px}
+  .timer-display{font-size:64px;font-weight:800;letter-spacing:.02em;font-variant-numeric:tabular-nums;margin-bottom:6px}
+  .timer-display.actief{color:var(--oranje)}
+  .timer-label{font-size:13px;color:var(--stil);margin-bottom:20px}
+  .timer-presets{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+  .timer-presets button{background:var(--card-2);border:1px solid var(--line);color:var(--tekst);font-weight:700;font-size:15px;padding:12px 18px;border-radius:10px;cursor:pointer;min-width:64px}
+  .timer-presets button.gekozen{background:var(--oranje-dim);border-color:var(--oranje);color:var(--oranje)}
+  .timer-eigen{display:flex;gap:8px;justify-content:center;align-items:center;margin-bottom:18px}
+  .timer-eigen input{width:90px;background:var(--card-2);border:1px solid var(--line);color:var(--tekst);font-size:16px;font-weight:600;padding:10px;border-radius:9px;text-align:center}
+  .timer-knoppen{display:flex;gap:10px}
+  .timer-knoppen button{flex:1;border:none;font-weight:800;font-size:16px;padding:15px;border-radius:11px;cursor:pointer;text-transform:uppercase;letter-spacing:.04em}
+  .btn-start{background:var(--groen);color:#0d1a12}
+  .btn-stop{background:#e05c5c;color:#fff}
+  .btn-reset{background:var(--card-2);color:var(--tekst);border:1px solid var(--line)!important}
+
+  .thuis-oef{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .thuis-oef .info .n{font-weight:700;font-size:15px}
+  .thuis-oef .info .d{font-size:13px;color:var(--stil);margin-top:2px}
+  .thuis-check{width:30px;height:30px;border-radius:8px;border:2px solid var(--line);background:transparent;cursor:pointer;flex-shrink:0;font-size:18px;color:var(--groen);display:flex;align-items:center;justify-content:center}
+  .thuis-check.aan{border-color:var(--groen);background:var(--groen-dim)}
+
+  .backup-blok{margin-top:20px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius)}
+  .backup-blok h3{font-size:14px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+  .backup-blok p{font-size:13px;color:var(--stil);margin-bottom:10px;line-height:1.4}
+  .backup-knoppen{display:flex;gap:8px}
+  .backup-knoppen button{flex:1;background:var(--card-2);border:1px solid var(--line);color:var(--tekst);font-weight:600;font-size:13px;padding:10px;border-radius:9px;cursor:pointer}
+  #importInput{display:none}
+  .backup-status{margin-top:10px;font-size:12px;color:var(--stil)}
+</style>
+</head>
+<body>
+<div class="toast" id="toast">Opgeslagen ✓</div>
+<header>
+  <div class="eyebrow">Willem · Training</div>
+  <h1>Training Logboek</h1>
+  <div class="datum" id="datumNu"></div>
+  <button id="installKnop" onclick="installeerApp()">📲 App installeren op je telefoon</button>
+</header>
+
+<div class="tabs">
+  <button class="tab actief" data-tab="maandag" onclick="wisselTab('maandag')">Maandag</button>
+  <button class="tab" data-tab="donderdag" onclick="wisselTab('donderdag')">Donderdag</button>
+  <button class="tab" data-tab="thuis" onclick="wisselTab('thuis')">Thuis</button>
+  <button class="tab" data-tab="timer" onclick="wisselTab('timer')">Timer</button>
+  <button class="tab" data-tab="progressie" onclick="wisselTab('progressie')">Progressie</button>
+  <button class="tab" data-tab="historie" onclick="wisselTab('historie')">Historie</button>
+</div>
+
+<div id="inhoud"></div>
+<div class="opslaan" id="opslaanBalk">
+  <div class="bewerk-info" id="bewerkInfo" style="display:none"></div>
+  <button id="opslaanKnop" onclick="slaOp()">Training opslaan</button>
+</div>
+
+<script>
+/* ============ SCHEMA ============ */
+const SCHEMA = {
+  maandag: {
+    label: "Maandag — Benen + Borst/Rug",
+    oefeningen: [
+      {id:"squat", naam:"Squat", doel:"3 × 6–8", sets:3},
+      {id:"legcurl", naam:"Seated Leg Curl", doel:"3 × 12", sets:3},
+      {id:"incline", naam:"Incline Dumbbell Press", doel:"4 × 8–10", sets:4},
+      {id:"crossover", naam:"Cable Crossover", doel:"3 × 10–12", sets:3},
+      {id:"csrow", naam:"Chest Supported Row", doel:"4 × 8", sets:4},
+      {id:"shpress", naam:"DB Shoulder Press", doel:"3 × 8–10", sets:3},
+      {id:"pushdown", naam:"Tricep Pushdown", doel:"3 × 10–12", sets:3}
+    ]
+  },
+  donderdag: {
+    label: "Donderdag — Bovenlichaam",
+    oefeningen: [
+      {id:"pecdeck", naam:"Pec Deck", doel:"3 × 10", sets:3},
+      {id:"vlakpress", naam:"Dumbbell Press (vlak)", doel:"3 × 8–10", sets:3},
+      {id:"pulldown", naam:"Lat Pulldown (breed)", doel:"3 × 10", sets:3},
+      {id:"cablerow", naam:"Cable Row / 1-Arm Row", doel:"3 × 10", sets:3},
+      {id:"lateral", naam:"Lateral Raises", doel:"3 × 12–15", sets:3},
+      {id:"facepull", naam:"Face Pull", doel:"3 × 15", sets:3},
+      {id:"ezcurl", naam:"EZ-Bar Curl", doel:"3 × 10–12", sets:3},
+      {id:"overhead", naam:"Overhead Tricep Ext.", doel:"2 × 12", sets:2}
+    ]
+  }
+};
+
+const THUIS = {
+  dinsdag: {
+    label: "Dinsdag — Core & stabiliteit (15 min)",
+    oefeningen: [
+      {id:"t_plank", naam:"Plank", doel:"3 × 45–60 sec"},
+      {id:"t_zijplank", naam:"Zijplank", doel:"2 × 30 sec per kant"},
+      {id:"t_deadbug", naam:"Dead bug", doel:"3 × 10 per kant"},
+      {id:"t_glute", naam:"Glute bridge", doel:"3 × 15"},
+      {id:"t_birddog", naam:"Bird dog", doel:"2 × 8 per kant"}
+    ]
+  },
+  vrijdag: {
+    label: "Vrijdag — Lichte activatie (dag vóór wedstrijd)",
+    oefeningen: [
+      {id:"t_pushup", naam:"Push-ups", doel:"3 × 10–12 (ruim voor falen)"},
+      {id:"t_pike", naam:"Pike push-ups", doel:"2 × 8"},
+      {id:"t_superman", naam:"Superman hold", doel:"2 × 30 sec"},
+      {id:"t_armcircle", naam:"Arm circles & schouders", doel:"2 min losmaken"},
+      {id:"t_stretch", naam:"Stretch: hammies, heup, kuit", doel:"3–4 min"}
+    ]
+  }
+};
+
+const OPSLAG_KEY = "willem-gym-sessies-v2";
+const OUD_KEY = "willem-gym-sessies";
+const THUIS_KEY = "willem-gym-thuis";
+const BACKUP_KEY = "willem-gym-laatste-backup";
+
+let sessies = [];
+let thuisStatus = {};
+let huidigeTab = "maandag";
+let bewerkDatum = null;
+
+/* ============ DATUM ============ */
+const maanden = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
+const dagen = ["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"];
+function fmtDatum(iso){
+  const d = new Date(iso);
+  return dagen[d.getDay()] + " " + d.getDate() + " " + maanden[d.getMonth()] + " " + d.getFullYear();
+}
+function fmtKort(iso){ const d = new Date(iso); return d.getDate() + " " + maanden[d.getMonth()]; }
+function dagenGeleden(iso){
+  const verschil = Math.floor((Date.now() - new Date(iso)) / 86400000);
+  if(verschil <= 0) return "vandaag";
+  if(verschil === 1) return "gisteren";
+  if(verschil < 7) return verschil + " dagen geleden";
+  const weken = Math.floor(verschil/7);
+  if(weken === 1) return "1 week geleden";
+  if(weken < 5) return weken + " weken geleden";
+  return Math.floor(verschil/30) + " maand(en) geleden";
+}
+document.getElementById("datumNu").textContent = fmtDatum(new Date().toISOString());
+
+/* ============ OPSLAG ============ */
+function laadAlles(){
+  try{
+    let r = localStorage.getItem(OPSLAG_KEY);
+    if(r){ sessies = JSON.parse(r); }
+    else {
+      let oud = localStorage.getItem(OUD_KEY);
+      if(oud){
+        // migreer oud formaat: oefeningen was {id:[sets]} → {id:{sets,notitie}}
+        let oudeSessies = JSON.parse(oud);
+        sessies = oudeSessies.map(s=>{
+          const nieuw = {};
+          Object.entries(s.oefeningen).forEach(([id,val])=>{
+            nieuw[id] = Array.isArray(val) ? {sets:val, notitie:""} : val;
+          });
+          return {...s, oefeningen:nieuw};
+        });
+        bewaarSessies();
+      }
+    }
+  }catch(e){ sessies = []; }
+  try{ let t = localStorage.getItem(THUIS_KEY); if(t) thuisStatus = JSON.parse(t); }catch(e){ thuisStatus = {}; }
+}
+function bewaarSessies(){ localStorage.setItem(OPSLAG_KEY, JSON.stringify(sessies)); }
+function bewaarThuis(){ localStorage.setItem(THUIS_KEY, JSON.stringify(thuisStatus)); }
+
+/* ============ KERN: per-oefening geheugen (de bugfix) ============ */
+function laatsteOefening(oefId, negeerDatum){
+  const kandidaten = sessies
+    .filter(s => (!negeerDatum || s.datum !== negeerDatum))
+    .filter(s => s.oefeningen[oefId] && s.oefeningen[oefId].sets && s.oefeningen[oefId].sets.length)
+    .sort((a,b) => new Date(b.datum) - new Date(a.datum));
+  if(!kandidaten.length) return null;
+  const s = kandidaten[0];
+  return { sets: s.oefeningen[oefId].sets, notitie: s.oefeningen[oefId].notitie || "", datum: s.datum };
+}
+function bovengrensReps(doel){
+  const r = doel.match(/(\d+)\s*[–-]\s*(\d+)/);
+  const e = doel.match(/×\s*(\d+)/);
+  return r ? parseInt(r[2]) : (e ? parseInt(e[1]) : null);
+}
+
+/* ============ RENDER: trainingsdag ============ */
+function renderDag(dag){
+  const schema = SCHEMA[dag];
+  let html = `<div class="sectie-titel">${schema.label}</div>`;
+  schema.oefeningen.forEach(oef => {
+    const vorige = laatsteOefening(oef.id, bewerkDatum);
+    const bewerkData = bewerkDatum ? sessies.find(s=>s.datum===bewerkDatum) : null;
+    const vullData = bewerkData && bewerkData.oefeningen[oef.id] ? bewerkData.oefeningen[oef.id] : null;
+
+    const aantalSets = Math.max(oef.sets, vorige ? vorige.sets.length : 0, vullData ? vullData.sets.length : 0);
+    let setsHtml = "";
+    for(let i=0;i<aantalSets;i++){
+      const vKg = vorige && vorige.sets[i] ? vorige.sets[i].kg : "";
+      const vReps = vorige && vorige.sets[i] ? vorige.sets[i].reps : "";
+      const invulKg = vullData && vullData.sets[i] ? vullData.sets[i].kg : "";
+      const invulReps = vullData && vullData.sets[i] ? vullData.sets[i].reps : "";
+      setsHtml += setRij(oef.id, i, vKg, vReps, invulKg, invulReps);
+    }
+
+    let vorigeTekst;
+    if(vorige){
+      const kgs = [...new Set(vorige.sets.map(s=>s.kg))];
+      const reps = vorige.sets.map(s=>s.reps).join(", ");
+      const kgTekst = kgs.length===1 ? kgs[0]+" kg" : vorige.sets.map(s=>s.kg+"kg").join("/");
+      let hint = "";
+      const bg = bovengrensReps(oef.doel);
+      if(bg && vorige.sets.every(s=>s.reps>=bg)) hint = ` <span class="hint">→ doel gehaald, probeer +gewicht</span>`;
+      vorigeTekst = `Vorige keer <span class="datum-tag">(${dagenGeleden(vorige.datum)})</span>: <b>${kgTekst}</b> × ${reps}${hint}`;
+    } else {
+      vorigeTekst = `Nog geen eerdere sessie — eerste keer!`;
+    }
+
+    const notitieVorig = vorige && vorige.notitie ? `<div class="notitie-vorig">📝 Vorige notitie: <b>${escapeHtml(vorige.notitie)}</b></div>` : "";
+    const invulNotitie = vullData && vullData.notitie ? escapeHtml(vullData.notitie) : "";
+
+    html += `
+    <div class="oef" data-oef="${oef.id}">
+      <div class="oef-kop">
+        <div class="oef-naam">${oef.naam}</div>
+        <div class="oef-doel">doel ${oef.doel}</div>
+      </div>
+      <div class="vorige">${vorigeTekst}</div>
+      ${notitieVorig}
+      <div class="sets" id="sets-${oef.id}">${setsHtml}</div>
+      <button class="set-plus" onclick="extraSet('${oef.id}')">+ set toevoegen</button>
+      <div class="notitie-veld">
+        <input type="text" data-notitie placeholder="Notitie (bv. machine hoogte 16, stand 4)" value="${invulNotitie}">
+      </div>
+    </div>`;
+  });
+  return html;
+}
+
+function setRij(oefId, i, kg, reps, invulKg, invulReps){
+  return `
+  <div class="set-rij">
+    <div class="set-nr">${i+1}</div>
+    <div class="veld"><input type="number" inputmode="decimal" step="0.5" placeholder="${kg!==""?kg:"—"}" value="${invulKg!==""?invulKg:""}" data-kg><span class="unit">kg</span></div>
+    <div class="veld"><input type="number" inputmode="numeric" placeholder="${reps!==""?reps:"—"}" value="${invulReps!==""?invulReps:""}" data-reps><span class="unit">reps</span></div>
+    <button class="set-x" onclick="verwijderSet(this)">×</button>
+  </div>`;
+}
+function extraSet(oefId){
+  const container = document.getElementById("sets-"+oefId);
+  const n = container.children.length;
+  container.insertAdjacentHTML("beforeend", setRij(oefId, n, "", "", "", ""));
+}
+function verwijderSet(knop){
+  const rij = knop.closest(".set-rij");
+  const container = rij.parentElement;
+  rij.remove();
+  [...container.querySelectorAll(".set-nr")].forEach((el,i)=> el.textContent = i+1);
+}
+
+/* ============ RENDER: thuis ============ */
+function vandaagKey(){ const d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
+function renderThuis(){
+  let html = "";
+  Object.entries(THUIS).forEach(([dag, blok])=>{
+    html += `<div class="sectie-titel">${blok.label}</div>`;
+    blok.oefeningen.forEach(oef=>{
+      const aan = thuisStatus[oef.id + "_" + vandaagKey()] ? "aan" : "";
+      html += `
+      <div class="thuis-oef">
+        <div class="info"><div class="n">${oef.naam}</div><div class="d">${oef.doel}</div></div>
+        <button class="thuis-check ${aan}" onclick="toggleThuis('${oef.id}', this)">${aan?"✓":""}</button>
+      </div>`;
+    });
+  });
+  html += `<div class="leeg" style="padding:20px 10px;font-size:13px">De vinkjes zijn per dag — morgen staan ze weer leeg, zodat je je dagelijkse routine kunt afvinken.</div>`;
+  return html;
+}
+function toggleThuis(id, knop){
+  const key = id + "_" + vandaagKey();
+  thuisStatus[key] = !thuisStatus[key];
+  knop.classList.toggle("aan", thuisStatus[key]);
+  knop.textContent = thuisStatus[key] ? "✓" : "";
+  bewaarThuis();
+}
+
+/* ============ RENDER: timer ============ */
+let timerInterval = null, timerRest = 0, timerTotaal = 90, timerLoopt = false;
+function renderTimer(){
+  return `
+  <div class="timer-wrap">
+    <div class="timer-display" id="timerDisplay">${fmtTijd(timerRest || timerTotaal)}</div>
+    <div class="timer-label" id="timerLabel">Rustpauze tussen je sets</div>
+    <div class="timer-presets" id="timerPresets">
+      <button data-sec="60" onclick="kiesPreset(60,this)">60s</button>
+      <button data-sec="90" onclick="kiesPreset(90,this)">90s</button>
+      <button data-sec="120" onclick="kiesPreset(120,this)">2 min</button>
+      <button data-sec="180" onclick="kiesPreset(180,this)">3 min</button>
+    </div>
+    <div class="timer-eigen">
+      <input type="number" id="eigenTijd" inputmode="numeric" placeholder="sec" min="5" max="600">
+      <button class="btn-reset" style="border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer" onclick="eigenTijd()">Zet</button>
+    </div>
+    <div class="timer-knoppen">
+      <button class="btn-start" id="timerStart" onclick="startTimer()">Start</button>
+      <button class="btn-reset" onclick="resetTimer()">Reset</button>
+    </div>
+  </div>
+  <div class="leeg" style="padding:16px 10px;font-size:13px">Tip: 60–90 sec bij isolatie (curls, raises), 2–3 min bij zwaar compound werk (squat, press, row).</div>`;
+}
+function fmtTijd(s){ const m=Math.floor(s/60); const r=s%60; return m+":"+String(r).padStart(2,"0"); }
+function kiesPreset(sec, knop){
+  timerTotaal=sec; timerRest=sec; timerLoopt=false; clearInterval(timerInterval);
+  document.querySelectorAll("#timerPresets button").forEach(b=>b.classList.remove("gekozen"));
+  knop.classList.add("gekozen"); updateTimerDisplay();
+  const s=document.getElementById("timerStart"); s.textContent="Start"; s.className="btn-start";
+}
+function eigenTijd(){
+  const v=parseInt(document.getElementById("eigenTijd").value);
+  if(v && v>=5){ timerTotaal=v; timerRest=v; timerLoopt=false; clearInterval(timerInterval);
+    document.querySelectorAll("#timerPresets button").forEach(b=>b.classList.remove("gekozen")); updateTimerDisplay(); }
+}
+function updateTimerDisplay(){
+  const d=document.getElementById("timerDisplay");
+  if(d){ d.textContent=fmtTijd(timerRest||timerTotaal); d.classList.toggle("actief", timerLoopt); }
+}
+function startTimer(){
+  if(timerLoopt){ clearInterval(timerInterval); timerLoopt=false;
+    document.getElementById("timerStart").textContent="Verder"; updateTimerDisplay(); return; }
+  if(timerRest<=0) timerRest=timerTotaal;
+  timerLoopt=true;
+  const s=document.getElementById("timerStart"); s.textContent="Pauze"; s.className="btn-stop";
+  updateTimerDisplay();
+  timerInterval=setInterval(()=>{
+    timerRest--; updateTimerDisplay();
+    if(timerRest<=0){
+      clearInterval(timerInterval); timerLoopt=false;
+      const lbl=document.getElementById("timerLabel"); if(lbl) lbl.textContent="⏰ Pauze voorbij — volgende set!";
+      if(navigator.vibrate) navigator.vibrate([300,100,300]);
+      const b=document.getElementById("timerStart"); if(b){ b.textContent="Start"; b.className="btn-start"; }
+    }
+  },1000);
+}
+function resetTimer(){
+  clearInterval(timerInterval); timerLoopt=false; timerRest=timerTotaal; updateTimerDisplay();
+  const lbl=document.getElementById("timerLabel"); if(lbl) lbl.textContent="Rustpauze tussen je sets";
+  const s=document.getElementById("timerStart"); if(s){ s.textContent="Start"; s.className="btn-start"; }
+}
+
+/* ============ RENDER: progressie ============ */
+function alleOefeningen(){ return [...SCHEMA.maandag.oefeningen, ...SCHEMA.donderdag.oefeningen]; }
+function renderProgressie(){
+  const oefs = alleOefeningen();
+  const gekozen = window._progOef || oefs[0].id;
+  let opties = oefs.map(o=>`<option value="${o.id}" ${o.id===gekozen?"selected":""}>${o.naam}</option>`).join("");
+  const data = progressieData(gekozen);
+
+  let inhoud;
+  if(data.length < 1){
+    inhoud = `<div class="prog-kaart"><div class="grafiek-leeg">Nog geen data voor deze oefening.<br>Log 'm een paar keer en je ziet hier je progressie.</div></div>`;
+  } else {
+    const gewichten = data.map(d=>d.topKg);
+    const eerste=gewichten[0], laatste=gewichten[gewichten.length-1], max=Math.max(...gewichten), groei=Math.round((laatste-eerste)*10)/10;
+    inhoud = `
+    <div class="prog-kaart">
+      <div class="prog-stat">
+        <div class="blok"><div class="getal">${laatste}<span style="font-size:13px"> kg</span></div><div class="label">Nu</div></div>
+        <div class="blok"><div class="getal">${max}<span style="font-size:13px"> kg</span></div><div class="label">Hoogste</div></div>
+        <div class="blok"><div class="getal">${groei>=0?"+":""}${groei}<span style="font-size:13px"> kg</span></div><div class="label">Groei</div></div>
+      </div>
+      ${grafiekSVG(data)}
+      <div style="font-size:12px;color:var(--stil);text-align:center;margin-top:8px">${data.length} sessie(s) · zwaarste set per training</div>
+    </div>`;
+  }
+  return `
+    <div class="sectie-titel">Progressie per oefening</div>
+    <select class="prog-select" onchange="window._progOef=this.value; toon();">${opties}</select>
+    ${inhoud}`;
+}
+function progressieData(oefId){
+  return sessies
+    .filter(s => s.oefeningen[oefId] && s.oefeningen[oefId].sets && s.oefeningen[oefId].sets.length)
+    .sort((a,b)=> new Date(a.datum)-new Date(b.datum))
+    .map(s => ({ datum:s.datum, topKg: Math.max(...s.oefeningen[oefId].sets.map(x=>x.kg)) }));
+}
+function grafiekSVG(data){
+  const W=460,H=160,pad=30;
+  const kgs=data.map(d=>d.topKg);
+  let min=Math.min(...kgs), max=Math.max(...kgs);
+  if(min===max){ min-=5; max+=5; }
+  const marge=(max-min)*0.15; min-=marge; max+=marge;
+  const x=i=> data.length===1 ? W/2 : pad+(i/(data.length-1))*(W-2*pad);
+  const y=kg=> H-pad-((kg-min)/(max-min))*(H-2*pad);
+  const punten=data.map((d,i)=>`${x(i)},${y(d.topKg)}`).join(" ");
+  const cirkels=data.map((d,i)=>`<circle cx="${x(i)}" cy="${y(d.topKg)}" r="4" fill="#FF6B1A"/>`).join("");
+  const labels=data.map((d,i)=>{
+    if(data.length>6 && i%2!==0 && i!==data.length-1) return "";
+    return `<text x="${x(i)}" y="${H-8}" fill="#8A94A0" font-size="10" text-anchor="middle">${fmtKort(d.datum)}</text>`;
+  }).join("");
+  const lijn=data.length===1 ? "" : `<polyline points="${punten}" fill="none" stroke="#FF6B1A" stroke-width="2.5" stroke-linejoin="round"/>`;
+  return `<svg class="grafiek" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${lijn}${cirkels}${labels}</svg>`;
+}
+
+/* ============ RENDER: historie ============ */
+function renderHistorie(){
+  let html = `<div class="sectie-titel">Opgeslagen trainingen</div>`;
+  if(!sessies.length){
+    html += `<div class="leeg">Nog geen trainingen opgeslagen.<br>Log je eerste sessie op maandag of donderdag!</div>`;
+  } else {
+    const gesorteerd=[...sessies].sort((a,b)=> new Date(b.datum)-new Date(a.datum));
+    html += gesorteerd.map(s=>{
+      const oefHtml=Object.entries(s.oefeningen).map(([id,data])=>{
+        if(!data.sets || !data.sets.length) return "";
+        const naam=(alleOefeningen().find(o=>o.id===id)||{naam:id}).naam;
+        const setsTekst=data.sets.map(st=>`${st.kg}kg×${st.reps}`).join("  ·  ");
+        const note=data.notitie ? `<br><span class="note">📝 ${escapeHtml(data.notitie)}</span>` : "";
+        return `<div class="hist-oef"><span class="n">${naam}</span><br><span class="s">${setsTekst}</span>${note}</div>`;
+      }).join("");
+      return `
+      <div class="hist-item">
+        <div class="hist-kop" onclick="this.parentElement.classList.toggle('open')">
+          <div class="hist-dag">${s.dag==="maandag"?"Maandag":"Donderdag"}</div>
+          <div class="hist-datum">${fmtDatum(s.datum)}</div>
+        </div>
+        <div class="hist-body">
+          ${oefHtml || "<div class='hist-oef s'>Geen sets ingevuld</div>"}
+          <div class="hist-acties">
+            <button onclick="bewerkSessie('${s.datum}')">✏️ Bewerken</button>
+            <button class="verwijder" onclick="verwijderSessie('${s.datum}')">🗑 Verwijderen</button>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+  }
+  const laatsteBackup=localStorage.getItem(BACKUP_KEY);
+  let backupStatus="";
+  if(laatsteBackup){ backupStatus=`<div class="backup-status">Laatste back-up: ${dagenGeleden(laatsteBackup)}</div>`; }
+  else if(sessies.length){ backupStatus=`<div class="backup-status" style="color:#e0a25c">⚠ Nog geen back-up gemaakt</div>`; }
+  html += `
+  <div class="backup-blok">
+    <h3>Back-up</h3>
+    <p>Je data staat op dit apparaat. Maak af en toe een back-upbestand — dan kun je alles terugzetten op een nieuwe telefoon of als er iets misgaat.</p>
+    <div class="backup-knoppen">
+      <button onclick="exporteer()">Back-up opslaan</button>
+      <button onclick="document.getElementById('importInput').click()">Back-up terugzetten</button>
+    </div>
+    ${backupStatus}
+    <input type="file" id="importInput" accept=".json" onchange="importeer(this)">
+  </div>`;
+  return html;
+}
+
+function bewerkSessie(datum){
+  const s=sessies.find(x=>x.datum===datum);
+  if(!s) return;
+  bewerkDatum=datum; huidigeTab=s.dag;
+  document.querySelectorAll(".tab").forEach(b=> b.classList.toggle("actief", b.dataset.tab===s.dag));
+  toon(); window.scrollTo(0,0);
+}
+function verwijderSessie(datum){
+  if(!confirm("Deze sessie verwijderen?")) return;
+  sessies=sessies.filter(s=>s.datum!==datum); bewaarSessies(); toon();
+}
+
+/* ============ BACK-UP ============ */
+function exporteer(){
+  const payload={ sessies, thuisStatus, versie:2, export:new Date().toISOString() };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  const d=new Date();
+  a.href=url; a.download=`training-backup-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  localStorage.setItem(BACKUP_KEY,new Date().toISOString());
+  toastMelding("Back-up opgeslagen ✓"); setTimeout(()=>toon(),700);
+}
+function importeer(input){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const data=JSON.parse(reader.result);
+      let nieuweSessies=Array.isArray(data)?data:data.sessies;
+      if(!Array.isArray(nieuweSessies)) throw new Error();
+      if(!confirm(`Back-up bevat ${nieuweSessies.length} sessies. Terugzetten? Dit vervangt je huidige historie.`)) return;
+      sessies=nieuweSessies;
+      if(data.thuisStatus) thuisStatus=data.thuisStatus;
+      bewaarSessies(); bewaarThuis(); toon();
+      toastMelding("Back-up teruggezet ✓");
+    }catch(e){ alert("Dit bestand is geen geldige back-up."); }
+  };
+  reader.readAsText(file); input.value="";
+}
+
+/* ============ OPSLAAN ============ */
+function slaOp(){
+  const oefeningen={}; let ietsIngevuld=false;
+  document.querySelectorAll(".oef").forEach(oefEl=>{
+    const id=oefEl.dataset.oef; const sets=[];
+    oefEl.querySelectorAll(".set-rij").forEach(rij=>{
+      const kg=rij.querySelector("[data-kg]").value;
+      const reps=rij.querySelector("[data-reps]").value;
+      if(kg!=="" && reps!==""){ sets.push({kg:parseFloat(kg),reps:parseInt(reps)}); ietsIngevuld=true; }
+    });
+    const notitie=oefEl.querySelector("[data-notitie]").value.trim();
+    if(sets.length || notitie){ oefeningen[id]={sets,notitie}; }
+  });
+  if(!ietsIngevuld){ alert("Vul eerst minimaal één set in (kg én reps)."); return; }
+
+  if(bewerkDatum){
+    const idx=sessies.findIndex(s=>s.datum===bewerkDatum);
+    if(idx>=0){ sessies[idx].oefeningen=oefeningen; }
+    bewerkDatum=null; bewaarSessies(); toastMelding("Sessie bijgewerkt ✓");
+  } else {
+    sessies.push({ datum:new Date().toISOString(), dag:huidigeTab, oefeningen });
+    bewaarSessies(); toastMelding("Training opgeslagen ✓");
+  }
+  setTimeout(()=>toon(),600);
+}
+
+/* ============ TABS ============ */
+function wisselTab(tab){
+  if(tab!=="maandag" && tab!=="donderdag") bewerkDatum=null;
+  huidigeTab=tab;
+  document.querySelectorAll(".tab").forEach(b=> b.classList.toggle("actief", b.dataset.tab===tab));
+  clearInterval(timerInterval); timerLoopt=false;
+  toon();
+}
+function toon(){
+  const inhoud=document.getElementById("inhoud");
+  const balk=document.getElementById("opslaanBalk");
+  const bewerkInfo=document.getElementById("bewerkInfo");
+  const opslaanKnop=document.getElementById("opslaanKnop");
+
+  if(huidigeTab==="maandag" || huidigeTab==="donderdag"){
+    inhoud.innerHTML=renderDag(huidigeTab); balk.style.display="block";
+    if(bewerkDatum){
+      bewerkInfo.style.display="block";
+      bewerkInfo.innerHTML=`✏️ Je bewerkt de sessie van ${fmtKort(bewerkDatum)} · <a href="#" onclick="bewerkDatum=null;toon();return false" style="color:var(--oranje)">annuleren</a>`;
+      opslaanKnop.textContent="Wijzigingen opslaan";
+    } else { bewerkInfo.style.display="none"; opslaanKnop.textContent="Training opslaan"; }
+  } else if(huidigeTab==="thuis"){ inhoud.innerHTML=renderThuis(); balk.style.display="none"; }
+  else if(huidigeTab==="timer"){ inhoud.innerHTML=renderTimer(); balk.style.display="none"; updateTimerDisplay(); }
+  else if(huidigeTab==="progressie"){ inhoud.innerHTML=renderProgressie(); balk.style.display="none"; }
+  else if(huidigeTab==="historie"){ inhoud.innerHTML=renderHistorie(); balk.style.display="none"; }
+}
+
+/* ============ HULP ============ */
+function escapeHtml(t){ const d=document.createElement("div"); d.textContent=t; return d.innerHTML; }
+function toastMelding(tekst){
+  const toast=document.getElementById("toast");
+  toast.textContent=tekst; toast.classList.add("zien");
+  setTimeout(()=> toast.classList.remove("zien"),2200);
+}
+
+/* ============ START ============ */
+laadAlles();
+toon();
+
+/* ============ PWA ============ */
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+}
+let installPrompt=null;
+window.addEventListener("beforeinstallprompt",(e)=>{
+  e.preventDefault(); installPrompt=e;
+  document.getElementById("installKnop").style.display="block";
+});
+function installeerApp(){
+  if(!installPrompt) return;
+  installPrompt.prompt();
+  installPrompt.userChoice.then(()=>{ installPrompt=null; document.getElementById("installKnop").style.display="none"; });
+}
+window.addEventListener("appinstalled",()=>{ document.getElementById("installKnop").style.display="none"; });
+</script>
+</body>
+</html>

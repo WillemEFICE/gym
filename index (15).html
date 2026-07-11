@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0E1116">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Training">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Training</title>
+<style>
+  :root{
+    --bg:#0E1116; --card:#171C23; --card2:#1F252E; --line:#2A323C;
+    --or:#FF6B1A; --or-dim:rgba(255,107,26,.13);
+    --gr:#3DD68C; --gr-dim:rgba(61,214,140,.13);
+    --rd:#E05C5C;
+    --tx:#E8ECEF; --st:#8A94A0;
+    --r:14px;
+    --navh:64px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;min-height:100%}
+  body{padding:14px 14px calc(var(--navh) + 24px + env(safe-area-inset-bottom));max-width:540px;margin:0 auto}
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit}
+
+  /* ===== Header ===== */
+  header{margin-bottom:12px}
+  .eyebrow{font-weight:700;letter-spacing:.16em;font-size:10px;color:var(--or);text-transform:uppercase}
+  h1{font-weight:800;font-size:24px;line-height:1.1;margin-top:2px}
+  .datum{color:var(--st);font-size:12px;margin-top:3px}
+  #installKnop{display:none;margin-top:10px;width:100%;background:var(--or-dim);border:1px solid var(--or);color:var(--or);font-weight:700;font-size:14px;padding:11px;border-radius:10px}
+
+  /* ===== Bottom nav ===== */
+  .nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--navh) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
+       background:rgba(14,17,22,.94);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+       display:flex;z-index:30;max-width:540px;margin:0 auto}
+  .nav button{flex:1;background:none;border:none;color:var(--st);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 2px;font-size:10px;font-weight:600}
+  .nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .nav button.on{color:var(--or)}
+
+  /* ===== Training-kiezer ===== */
+  .kiezer{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px;scrollbar-width:none}
+  .kiezer::-webkit-scrollbar{display:none}
+  .kiezer button{flex:0 0 auto;background:var(--card);border:1px solid var(--line);color:var(--st);font-weight:700;font-size:13px;padding:9px 14px;border-radius:99px;white-space:nowrap}
+  .kiezer button.on{background:var(--or);border-color:var(--or);color:#141414}
+
+  /* ===== Oefening-kaart ===== */
+  .oef{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px;margin-bottom:10px}
+  .oef.ss{border-left:3px solid var(--or)}
+  .ss-tag{display:inline-block;background:var(--or-dim);color:var(--or);font-size:10px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:5px;margin-bottom:6px}
+  .oef-kop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .oef-naam{font-weight:700;font-size:16px}
+  .oef-doel{font-size:11px;color:var(--st);white-space:nowrap;font-weight:600}
+  .vorige{margin-top:5px;font-size:12.5px;color:var(--st);line-height:1.45}
+  .vorige b{color:var(--tx);font-weight:600}
+  .hint{color:var(--gr);font-weight:600}
+  .notitie-vorig{margin-top:3px;font-size:12px;color:var(--st);font-style:italic}
+  .notitie-vorig b{color:var(--tx);font-style:normal}
+  .sets{margin-top:9px;display:flex;flex-direction:column;gap:7px}
+  .rij{display:grid;grid-template-columns:26px 1fr 1fr 30px;gap:7px;align-items:center}
+  .nr{font-weight:700;font-size:13px;color:var(--st);text-align:center}
+  .veld{position:relative}
+  .veld input{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:9px;color:var(--tx);font-weight:600;font-size:16px;padding:10px 34px 10px 11px;outline:none}
+  .veld input:focus{border-color:var(--or)}
+  .veld span{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--st);pointer-events:none}
+  .xs{border:none;background:none;color:var(--st);font-size:17px;padding:5px}
+  .plus{margin-top:8px;width:100%;background:none;border:1px dashed var(--line);color:var(--st);border-radius:9px;padding:8px;font-weight:600;font-size:13px}
+  .note-in{margin-top:8px}
+  .note-in input{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:9px;color:var(--tx);font-size:14px;padding:9px 11px;outline:none}
+  .note-in input:focus{border-color:var(--or)}
+
+  /* ===== Knoppen ===== */
+  .primair{width:100%;background:var(--or);border:none;color:#141414;font-weight:800;font-size:16px;text-transform:uppercase;letter-spacing:.05em;padding:15px;border-radius:12px;margin-top:6px}
+  .secundair{background:var(--card2);border:1px solid var(--line);color:var(--tx);font-weight:600;font-size:13px;padding:10px 14px;border-radius:9px}
+  .gevaar{color:var(--rd)}
+  .balk{margin-top:14px}
+  .bewerk-bar{background:var(--or-dim);border:1px solid var(--or);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--or);display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .bewerk-bar button{background:none;border:none;color:var(--or);font-weight:700;text-decoration:underline;font-size:13px}
+
+  .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-90px);background:var(--gr);color:#0d1a12;font-weight:700;font-size:14px;padding:10px 20px;border-radius:99px;transition:transform .3s;z-index:50;white-space:nowrap;max-width:90vw}
+  .toast.zien{transform:translateX(-50%) translateY(0)}
+  .toast.fout{background:var(--rd);color:#fff}
+
+  .titel{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.05em;margin:2px 2px 10px;color:var(--st)}
+  .leeg{text-align:center;color:var(--st);padding:36px 18px;font-size:14px;line-height:1.6}
+
+  /* ===== Historie ===== */
+  .hist{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px;margin-bottom:9px}
+  .hist-kop{display:flex;justify-content:space-between;align-items:center}
+  .hist-n{font-weight:700;font-size:15px}
+  .hist-d{font-size:12px;color:var(--st)}
+  .hist-body{display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+  .hist.open .hist-body{display:block}
+  .hist-oef{margin-bottom:7px;font-size:13.5px}
+  .hist-oef .n{font-weight:600}
+  .hist-oef .s{color:var(--st)}
+  .hist-oef .note{color:var(--st);font-style:italic;font-size:12.5px}
+  .acties{display:flex;gap:7px;margin-top:8px}
+
+  /* ===== Progressie ===== */
+  .sel{width:100%;background:var(--card);border:1px solid var(--line);color:var(--tx);font-size:15px;font-weight:600;padding:12px;border-radius:10px;margin-bottom:12px}
+  .kaart{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px;margin-bottom:10px}
+  .stats{display:flex;margin-bottom:10px}
+  .stats div{flex:1;text-align:center}
+  .stats .g{font-size:21px;font-weight:800;color:var(--or)}
+  .stats .g small{font-size:12px}
+  .stats .l{font-size:10px;color:var(--st);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+  svg.gr{width:100%;height:170px;display:block}
+
+  /* ===== Timer ===== */
+  .timer{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px 16px;text-align:center;margin-bottom:14px}
+  .tdisp{font-size:60px;font-weight:800;font-variant-numeric:tabular-nums;margin-bottom:4px;letter-spacing:.01em}
+  .tdisp.on{color:var(--or)}
+  .tlab{font-size:13px;color:var(--st);margin-bottom:18px}
+  .presets{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+  .presets button{background:var(--card2);border:1px solid var(--line);color:var(--tx);font-weight:700;font-size:14px;padding:11px 15px;border-radius:10px;min-width:58px}
+  .presets button.on{background:var(--or-dim);border-color:var(--or);color:var(--or)}
+  .eigen{display:flex;gap:7px;justify-content:center;margin-bottom:16px}
+  .eigen input{width:86px;background:var(--card2);border:1px solid var(--line);color:var(--tx);font-size:16px;font-weight:600;padding:10px;border-radius:9px;text-align:center}
+  .tknop{display:flex;gap:9px}
+  .tknop button{flex:1;border:none;font-weight:800;font-size:15px;padding:14px;border-radius:11px;text-transform:uppercase;letter-spacing:.04em}
+  .start{background:var(--gr);color:#0d1a12}
+  .stop{background:var(--rd);color:#fff}
+  .reset{background:var(--card2);color:var(--tx);border:1px solid var(--line)!important}
+
+  /* ===== Beheer ===== */
+  .beheer-oef{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:11px 12px;margin-bottom:8px;display:flex;align-items:center;gap:9px}
+  .beheer-oef .info{flex:1;min-width:0}
+  .beheer-oef .n{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .beheer-oef .d{font-size:12px;color:var(--st);margin-top:1px}
+  .mini{background:var(--card2);border:1px solid var(--line);color:var(--tx);border-radius:7px;width:32px;height:32px;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .mini.gev{color:var(--rd)}
+
+  /* ===== Modal ===== */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:flex-end;justify-content:center;z-index:60}
+  .modal.dicht{display:none}
+  .modal-in{background:var(--card);border-top-left-radius:18px;border-top-right-radius:18px;padding:20px 16px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:540px;max-height:88vh;overflow-y:auto}
+  .modal-in h3{font-size:17px;margin-bottom:14px}
+  .veldje{margin-bottom:12px}
+  .veldje label{display:block;font-size:12px;color:var(--st);font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+  .veldje input,.veldje select,.veldje textarea{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:9px;color:var(--tx);font-size:16px;padding:11px;outline:none}
+  .veldje input:focus,.veldje select:focus,.veldje textarea:focus{border-color:var(--or)}
+  .veldje textarea{min-height:120px;font-family:ui-monospace,monospace;font-size:12px;resize:vertical}
+  .veldje .hulp{font-size:11.5px;color:var(--st);margin-top:4px;line-height:1.45}
+  .modal-knop{display:flex;gap:9px;margin-top:16px}
+  .modal-knop button{flex:1;padding:13px;border-radius:10px;font-weight:700;font-size:15px;border:none}
+  .m-ok{background:var(--or);color:#141414}
+  .m-nee{background:var(--card2);color:var(--tx);border:1px solid var(--line)!important}
+
+  /* ===== Gewicht ===== */
+  .gew-in{display:flex;gap:8px;margin-bottom:14px}
+  .gew-in .veld{flex:1}
+  .gew-in button{background:var(--or);border:none;color:#141414;font-weight:800;padding:0 20px;border-radius:10px;font-size:15px}
+  .gew-rij{display:flex;justify-content:space-between;align-items:center;padding:11px 13px;background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:7px}
+  .gew-rij .kg{font-weight:700;font-size:16px}
+  .gew-rij .dt{font-size:12.5px;color:var(--st)}
+  .gew-rij .del{background:none;border:none;color:var(--st);font-size:17px;padding:3px 6px}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<header>
+  <div class="eyebrow" id="eyebrow">Willem</div>
+  <h1 id="titelH1">Training</h1>
+  <div class="datum" id="datumNu"></div>
+  <button id="installKnop" onclick="installeerApp()">📲 App installeren op je telefoon</button>
+</header>
+
+<div id="inhoud"></div>
+
+<nav class="nav" id="nav">
+  <button data-t="training" onclick="ga('training')" class="on">
+    <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M4 9v6M20 9v6M8 7v10M16 7v10"/></svg>
+    Training
+  </button>
+  <button data-t="gewicht" onclick="ga('gewicht')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 12l4-5"/><circle cx="12" cy="12" r="1"/></svg>
+    Gewicht
+  </button>
+  <button data-t="timer" onclick="ga('timer')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+    Timer
+  </button>
+  <button data-t="progressie" onclick="ga('progressie')">
+    <svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 3 8-8"/><path d="M15 7h5v5"/></svg>
+    Progressie
+  </button>
+  <button data-t="meer" onclick="ga('meer')">
+    <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>
+    Meer
+  </button>
+</nav>
+
+<div class="modal dicht" id="modal"><div class="modal-in" id="modalIn"></div></div>
+
+<script>
+/* ========== STANDAARDSCHEMA ========== */
+const STD_SCHEMA = {
+  trainingen: [
+    { id:"dag1", naam:"Benen + Borst/Rug", oefeningen:[
+      {id:"squat", naam:"Squat", doel:"3 × 6–8", sets:3, rust:120},
+      {id:"legcurl", naam:"Seated Leg Curl", doel:"3 × 12", sets:3, rust:90},
+      {id:"incline", naam:"Incline DB Press", doel:"4 × 8–10", sets:4, rust:120},
+      {id:"csrow", naam:"Chest Supported Row", doel:"4 × 8", sets:4, rust:120},
+      {id:"pulldown", naam:"Lat Pulldown (breed)", doel:"3 × 10", sets:3, rust:90},
+      {id:"shpress", naam:"Shoulder Press (machine)", doel:"3 × 8–10", sets:3, rust:90},
+      {id:"crossover", naam:"Cable Crossover", doel:"4 × 10–12", sets:4, rust:90},
+      {id:"pushdown", naam:"Tricep Pushdown (rope)", doel:"3 × 10–12", sets:3, rust:60},
+      {id:"lateral", naam:"Lateral Raises", doel:"3 × 12–15", sets:3, rust:60, superset:"A"},
+      {id:"facepull", naam:"Face Pull", doel:"2 × 15", sets:2, rust:60, superset:"A"}
+    ]},
+    { id:"dag2", naam:"Bovenlichaam", oefeningen:[
+      {id:"dbbench", naam:"DB Bench Press (vlak)", doel:"4 × 8–10", sets:4, rust:120},
+      {id:"cablerow", naam:"Cable Row", doel:"4 × 10", sets:4, rust:120},
+      {id:"pecdeck", naam:"Pec Deck", doel:"3 × 10", sets:3, rust:90},
+      {id:"straightarm", naam:"Straight Arm Pulldown", doel:"3 × 12", sets:3, rust:90},
+      {id:"lateral2", naam:"Lateral Raises", doel:"3 × 12–15", sets:3, rust:90},
+      {id:"facepull2", naam:"Face Pull", doel:"3 × 15", sets:3, rust:90},
+      {id:"ezcurl", naam:"EZ-Bar Curl", doel:"3 × 10–12", sets:3, rust:60, superset:"A"},
+      {id:"skullcrusher", naam:"DB Skull Crushers", doel:"3 × 10–12", sets:3, rust:60, superset:"A"},
+      {id:"inclinecurl", naam:"Incline DB Curl", doel:"3 × 10–12", sets:3, rust:60, superset:"B"},
+      {id:"reversecurl", naam:"Reverse Grip Cable Curl", doel:"3 × 12–15", sets:3, rust:60, superset:"B"}
+    ]},
+    { id:"dag3", naam:"Licht benen + Armen/Schouders", oefeningen:[
+      {id:"legpress", naam:"Leg Press", doel:"3 × 10–12", sets:3, rust:90},
+      {id:"calf", naam:"Calf Raise (Smith)", doel:"4 × 15–20", sets:4, rust:60},
+      {id:"lateral3", naam:"Lateral Raises", doel:"3 × 12–15", sets:3, rust:90},
+      {id:"reversefly", naam:"Bent-Over DB Reverse Fly", doel:"3 × 12–15", sets:3, rust:90},
+      {id:"hammer", naam:"Hammer Curl", doel:"3 × 12", sets:3, rust:60, superset:"A"},
+      {id:"skullcrusher3", naam:"DB Skull Crushers", doel:"3 × 10–12", sets:3, rust:60, superset:"A"},
+      {id:"inclinecurl3", naam:"Incline DB Curl", doel:"3 × 10–12", sets:3, rust:60, superset:"B"},
+      {id:"pushdown3", naam:"Tricep Pushdown (rope)", doel:"3 × 12", sets:3, rust:60, superset:"B"}
+    ]}
+  ]
+};
+
+/* ========== OPSLAG ========== */
+const K = { schema:"wg-schema-v3", sess:"wg-sessies-v3", gew:"wg-gewicht-v3", bk:"wg-backup-v3", oud:"willem-gym-sessies-v2" };
+let schema = null, sessies = [], gewichten = [];
+let tab = "training", actieveTraining = null, bewerkDatum = null, progOef = null;
+
+function laad(){
+  try{ const s = localStorage.getItem(K.schema); schema = s ? JSON.parse(s) : JSON.parse(JSON.stringify(STD_SCHEMA)); }
+  catch(e){ schema = JSON.parse(JSON.stringify(STD_SCHEMA)); }
+  try{ const s = localStorage.getItem(K.sess); sessies = s ? JSON.parse(s) : []; }catch(e){ sessies = []; }
+  try{ const g = localStorage.getItem(K.gew); gewichten = g ? JSON.parse(g) : []; }catch(e){ gewichten = []; }
+  // migratie oude app
+  if(!sessies.length){
+    try{
+      const oud = localStorage.getItem(K.oud);
+      if(oud){
+        const os = JSON.parse(oud);
+        sessies = os.map(s=>({
+          datum: s.datum,
+          training: s.dag === "donderdag" ? "dag2" : "dag1",
+          oefeningen: s.oefeningen
+        }));
+        bewaarSess();
+      }
+    }catch(e){}
+  }
+  if(!actieveTraining && schema.trainingen.length) actieveTraining = schema.trainingen[0].id;
+}
+const bewaarSchema = ()=> localStorage.setItem(K.schema, JSON.stringify(schema));
+const bewaarSess = ()=> localStorage.setItem(K.sess, JSON.stringify(sessies));
+const bewaarGew = ()=> localStorage.setItem(K.gew, JSON.stringify(gewichten));
+
+/* ========== DATUM ========== */
+const MND = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
+const DAG = ["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"];
+const fmtLang = iso => { const d=new Date(iso); return DAG[d.getDay()]+" "+d.getDate()+" "+MND[d.getMonth()]+" "+d.getFullYear(); };
+const fmtKort = iso => { const d=new Date(iso); return d.getDate()+" "+MND[d.getMonth()]; };
+function geleden(iso){
+  const v = Math.floor((Date.now()-new Date(iso))/86400000);
+  if(v<=0) return "vandaag"; if(v===1) return "gisteren";
+  if(v<7) return v+" dagen geleden";
+  const w = Math.floor(v/7);
+  if(w===1) return "1 week geleden";
+  if(w<5) return w+" weken geleden";
+  return Math.floor(v/30)+" maand(en) geleden";
+}
+
+/* ========== HULP ========== */
+const esc = t => { const d=document.createElement("div"); d.textContent=t??""; return d.innerHTML; };
+function toast(t, fout){
+  const el=document.getElementById("toast");
+  el.textContent=t; el.classList.toggle("fout", !!fout); el.classList.add("zien");
+  setTimeout(()=>el.classList.remove("zien"), 2400);
+}
+const alleOefs = () => schema.trainingen.flatMap(t=>t.oefeningen);
+function oefNaam(id){
+  const o = alleOefs().find(x=>x.id===id);
+  if(o) return o.naam;
+  // archief: oefening bestaat niet meer in schema
+  return id;
+}
+function bovenReps(doel){
+  const r = String(doel||"").match(/(\d+)\s*[–-]\s*(\d+)/);
+  const e = String(doel||"").match(/[×x]\s*(\d+)/);
+  return r ? +r[2] : (e ? +e[1] : null);
+}
+function uid(basis){
+  let n = (basis||"oef").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,10) || "oef";
+  const bestaand = new Set(alleOefs().map(o=>o.id));
+  let id = n, i = 2;
+  while(bestaand.has(id)){ id = n + i; i++; }
+  return id;
+}
+
+/* ========== KERN: laatste keer per oefening ========== */
+function laatste(oefId, negeer){
+  const k = sessies
+    .filter(s => (!negeer || s.datum !== negeer))
+    .filter(s => s.oefeningen[oefId]?.sets?.length)
+    .sort((a,b)=> new Date(b.datum)-new Date(a.datum));
+  if(!k.length) return null;
+  const s = k[0];
+  return { sets:s.oefeningen[oefId].sets, notitie:s.oefeningen[oefId].notitie||"", datum:s.datum };
+}
+
+/* ========== NAVIGATIE ========== */
+function ga(t){
+  tab = t;
+  if(t!=="training") bewerkDatum = null;
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("on", b.dataset.t===t));
+  stopTimer();
+  toon();
+  window.scrollTo(0,0);
+}
+
+/* ========== RENDER ========== */
+function toon(){
+  const c = document.getElementById("inhoud");
+  const h1 = document.getElementById("titelH1");
+  const eb = document.getElementById("eyebrow");
+  const dt = document.getElementById("datumNu");
+  dt.textContent = fmtLang(new Date().toISOString());
+  eb.textContent = "Willem";
+
+  if(tab==="training"){ h1.textContent="Training"; c.innerHTML = rTraining(); }
+  else if(tab==="gewicht"){ h1.textContent="Gewicht"; c.innerHTML = rGewicht(); }
+  else if(tab==="timer"){ h1.textContent="Rusttimer"; c.innerHTML = rTimer(); updTimer(); }
+  else if(tab==="progressie"){ h1.textContent="Progressie"; c.innerHTML = rProgressie(); }
+  else if(tab==="meer"){ h1.textContent="Meer"; c.innerHTML = rMeer(); }
+}
+
+/* ---------- Training ---------- */
+function rTraining(){
+  if(!schema.trainingen.length){
+    return `<div class="leeg">Nog geen trainingen.<br>Ga naar <b>Meer → Trainingen beheren</b> om er een aan te maken.</div>`;
+  }
+  if(!schema.trainingen.find(t=>t.id===actieveTraining)) actieveTraining = schema.trainingen[0].id;
+  const tr = schema.trainingen.find(t=>t.id===actieveTraining);
+
+  let h = `<div class="kiezer">` + schema.trainingen.map(t=>
+    `<button class="${t.id===actieveTraining?"on":""}" onclick="kiesTraining('${t.id}')">${esc(t.naam)}</button>`
+  ).join("") + `</div>`;
+
+  if(bewerkDatum){
+    h += `<div class="bewerk-bar"><span>Je bewerkt de sessie van ${fmtKort(bewerkDatum)}</span>
+          <button onclick="bewerkDatum=null;toon()">annuleren</button></div>`;
+  }
+
+  if(!tr.oefeningen.length){
+    h += `<div class="leeg">Nog geen oefeningen in deze training.<br>Ga naar <b>Meer → Oefeningen beheren</b>.</div>`;
+    return h;
+  }
+
+  const bewerkData = bewerkDatum ? sessies.find(s=>s.datum===bewerkDatum) : null;
+  let vorigeSS = null;
+
+  tr.oefeningen.forEach(o=>{
+    const v = laatste(o.id, bewerkDatum);
+    const vul = bewerkData?.oefeningen[o.id] || null;
+    const n = Math.max(o.sets||3, v?.sets.length||0, vul?.sets.length||0);
+
+    let sets = "";
+    for(let i=0;i<n;i++){
+      const vk = v?.sets[i]?.kg ?? "";
+      const vr = v?.sets[i]?.reps ?? "";
+      const ik = vul?.sets[i]?.kg ?? "";
+      const ir = vul?.sets[i]?.reps ?? "";
+      sets += rij(o.id, i, vk, vr, ik, ir);
+    }
+
+    let vt;
+    if(v){
+      const kgs = [...new Set(v.sets.map(s=>s.kg))];
+      const reps = v.sets.map(s=>s.reps).join(", ");
+      const kt = kgs.length===1 ? kgs[0]+" kg" : v.sets.map(s=>s.kg+"kg").join("/");
+      const br = bovenReps(o.doel);
+      const hint = (br && v.sets.every(s=>s.reps>=br)) ? ` <span class="hint">→ doel gehaald, +gewicht</span>` : "";
+      vt = `Vorige keer (${geleden(v.datum)}): <b>${kt}</b> × ${reps}${hint}`;
+    } else vt = `Nog geen eerdere sessie`;
+
+    const nv = v?.notitie ? `<div class="notitie-vorig">📝 <b>${esc(v.notitie)}</b></div>` : "";
+    const ssTag = (o.superset && o.superset !== vorigeSS) ? `<div class="ss-tag">Superset ${esc(o.superset)}</div>` : "";
+    vorigeSS = o.superset || null;
+
+    h += `<div class="oef ${o.superset?"ss":""}" data-oef="${o.id}">
+      ${ssTag}
+      <div class="oef-kop"><div class="oef-naam">${esc(o.naam)}</div><div class="oef-doel">${esc(o.doel||"")}</div></div>
+      <div class="vorige">${vt}</div>${nv}
+      <div class="sets" id="sets-${o.id}">${sets}</div>
+      <button class="plus" onclick="setErbij('${o.id}')">+ set</button>
+      <div class="note-in"><input type="text" data-notitie placeholder="Notitie" value="${esc(vul?.notitie||"")}"></div>
+    </div>`;
+  });
+
+  h += `<div class="balk"><button class="primair" onclick="slaOp()">${bewerkDatum?"Wijzigingen opslaan":"Training opslaan"}</button></div>`;
+  return h;
+}
+function rij(oid,i,vk,vr,ik,ir){
+  return `<div class="rij">
+    <div class="nr">${i+1}</div>
+    <div class="veld"><input type="number" inputmode="decimal" step="0.5" placeholder="${vk!==""?vk:"—"}" value="${ik!==""?ik:""}" data-kg><span>kg</span></div>
+    <div class="veld"><input type="number" inputmode="numeric" placeholder="${vr!==""?vr:"—"}" value="${ir!==""?ir:""}" data-reps><span>reps</span></div>
+    <button class="xs" onclick="setWeg(this)">×</button>
+  </div>`;
+}
+function kiesTraining(id){ actieveTraining=id; bewerkDatum=null; toon(); }
+function setErbij(oid){
+  const c = document.getElementById("sets-"+oid);
+  c.insertAdjacentHTML("beforeend", rij(oid, c.children.length, "", "", "", ""));
+}
+function setWeg(b){
+  const r=b.closest(".rij"), c=r.parentElement;
+  r.remove();
+  [...c.querySelectorAll(".nr")].forEach((e,i)=>e.textContent=i+1);
+}
+function slaOp(){
+  const oefs = {};
+  let iets = false;
+  document.querySelectorAll(".oef").forEach(el=>{
+    const id = el.dataset.oef, sets=[];
+    el.querySelectorAll(".rij").forEach(r=>{
+      const kg=r.querySelector("[data-kg]").value, reps=r.querySelector("[data-reps]").value;
+      if(kg!=="" && reps!==""){ sets.push({kg:parseFloat(kg), reps:parseInt(reps)}); iets=true; }
+    });
+    const notitie = el.querySelector("[data-notitie]").value.trim();
+    if(sets.length || notitie) oefs[id] = {sets, notitie};
+  });
+  if(!iets){ toast("Vul minstens één set in (kg én reps)", true); return; }
+
+  if(bewerkDatum){
+    const i = sessies.findIndex(s=>s.datum===bewerkDatum);
+    if(i>=0) sessies[i].oefeningen = oefs;
+    bewerkDatum = null;
+    bewaarSess(); toast("Sessie bijgewerkt ✓");
+  } else {
+    sessies.push({ datum:new Date().toISOString(), training:actieveTraining, oefeningen:oefs });
+    bewaarSess(); toast("Training opgeslagen ✓");
+  }
+  setTimeout(toon, 500);
+}
+
+/* ---------- Gewicht ---------- */
+function rGewicht(){
+  const g = [...gewichten].sort((a,b)=> new Date(b.datum)-new Date(a.datum));
+  let stats = "";
+  if(g.length){
+    const nu = g[0].kg;
+    const eerste = g[g.length-1].kg;
+    const verschil = Math.round((nu-eerste)*10)/10;
+    stats = `<div class="kaart">
+      <div class="stats">
+        <div><div class="g">${nu}<small> kg</small></div><div class="l">Nu</div></div>
+        <div><div class="g">${verschil>=0?"+":""}${verschil}<small> kg</small></div><div class="l">Verschil</div></div>
+        <div><div class="g">${g.length}</div><div class="l">Metingen</div></div>
+      </div>
+      ${g.length>1 ? grafiek([...g].reverse().map(x=>({datum:x.datum, y:x.kg}))) : `<div style="text-align:center;color:var(--st);padding:24px;font-size:13px">Voeg een 2e meting toe voor een grafiek</div>`}
+    </div>`;
+  }
+  return `<div class="titel">Lichaamsgewicht</div>
+    <div class="gew-in">
+      <div class="veld"><input type="number" inputmode="decimal" step="0.1" id="gewIn" placeholder="83.0"><span>kg</span></div>
+      <button onclick="gewToevoegen()">Opslaan</button>
+    </div>
+    ${stats}
+    ${g.length ? `<div class="titel" style="margin-top:16px">Geschiedenis</div>` + g.map(x=>`
+      <div class="gew-rij">
+        <div><div class="kg">${x.kg} kg</div><div class="dt">${fmtLang(x.datum)}</div></div>
+        <button class="del" onclick="gewWeg('${x.datum}')">×</button>
+      </div>`).join("")
+      : `<div class="leeg">Nog geen metingen.<br>Weeg jezelf 1× per week op hetzelfde moment — de trend over weken zegt meer dan één weging.</div>`}`;
+}
+function gewToevoegen(){
+  const el = document.getElementById("gewIn");
+  const v = parseFloat(el.value);
+  if(!v || v<30 || v>250){ toast("Vul een geldig gewicht in", true); return; }
+  gewichten.push({ datum:new Date().toISOString(), kg:Math.round(v*10)/10 });
+  bewaarGew(); el.value=""; toast("Gewicht opgeslagen ✓"); toon();
+}
+function gewWeg(datum){
+  if(!confirm("Deze meting verwijderen?")) return;
+  gewichten = gewichten.filter(g=>g.datum!==datum);
+  bewaarGew(); toon();
+}
+
+/* ---------- Timer ---------- */
+let tInt=null, tRest=0, tTot=90, tAan=false;
+function rTimer(){
+  return `<div class="timer">
+    <div class="tdisp ${tAan?"on":""}" id="tdisp">${mmss(tRest||tTot)}</div>
+    <div class="tlab" id="tlab">Rustpauze tussen je sets</div>
+    <div class="presets" id="presets">
+      ${[60,90,120,180].map(s=>`<button onclick="preset(${s},this)" class="${tTot===s?"on":""}">${s<60?s+"s":(s%60?s+"s":(s/60)+" min")}</button>`).join("")}
+    </div>
+    <div class="eigen">
+      <input type="number" inputmode="numeric" id="eigenSec" placeholder="sec" min="5" max="900">
+      <button class="reset" style="padding:10px 16px;border-radius:9px;font-weight:700" onclick="eigenSec()">Zet</button>
+    </div>
+    <div class="tknop">
+      <button class="${tAan?"stop":"start"}" id="tstart" onclick="startTimer()">${tAan?"Pauze":"Start"}</button>
+      <button class="reset" onclick="resetTimer()">Reset</button>
+    </div>
+  </div>
+  <div class="leeg" style="padding:14px;font-size:13px">Zware compounds: 2 min. Isolatie: 60–90 sec.</div>`;
+}
+const mmss = s => Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+function updTimer(){
+  const d=document.getElementById("tdisp");
+  if(d){ d.textContent=mmss(tRest||tTot); d.classList.toggle("on", tAan); }
+}
+function preset(s, b){
+  tTot=s; tRest=s; tAan=false; clearInterval(tInt);
+  document.querySelectorAll("#presets button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); updTimer();
+  const st=document.getElementById("tstart"); st.textContent="Start"; st.className="start";
+}
+function eigenSec(){
+  const v=parseInt(document.getElementById("eigenSec").value);
+  if(v>=5){ tTot=v; tRest=v; tAan=false; clearInterval(tInt);
+    document.querySelectorAll("#presets button").forEach(x=>x.classList.remove("on")); updTimer(); }
+}
+function startTimer(){
+  const st=document.getElementById("tstart");
+  if(tAan){ clearInterval(tInt); tAan=false; st.textContent="Verder"; st.className="start"; updTimer(); return; }
+  if(tRest<=0) tRest=tTot;
+  tAan=true; st.textContent="Pauze"; st.className="stop"; updTimer();
+  tInt=setInterval(()=>{
+    tRest--; updTimer();
+    if(tRest<=0){
+      clearInterval(tInt); tAan=false;
+      const l=document.getElementById("tlab"); if(l) l.textContent="⏰ Pauze voorbij — volgende set!";
+      if(navigator.vibrate) navigator.vibrate([300,120,300]);
+      const b=document.getElementById("tstart"); if(b){ b.textContent="Start"; b.className="start"; }
+    }
+  },1000);
+}
+function resetTimer(){
+  clearInterval(tInt); tAan=false; tRest=tTot; updTimer();
+  const l=document.getElementById("tlab"); if(l) l.textContent="Rustpauze tussen je sets";
+  const b=document.getElementById("tstart"); if(b){ b.textContent="Start"; b.className="start"; }
+}
+function stopTimer(){ clearInterval(tInt); tAan=false; }
+
+/* ---------- Progressie ---------- */
+function rProgressie(){
+  const oefs = alleOefs();
+  if(!oefs.length) return `<div class="leeg">Nog geen oefeningen.</div>`;
+  if(!progOef || !oefs.find(o=>o.id===progOef)) progOef = oefs[0].id;
+
+  const opties = schema.trainingen.map(t=>
+    `<optgroup label="${esc(t.naam)}">` +
+    t.oefeningen.map(o=>`<option value="${o.id}" ${o.id===progOef?"selected":""}>${esc(o.naam)}</option>`).join("") +
+    `</optgroup>`).join("");
+
+  const data = sessies
+    .filter(s=>s.oefeningen[progOef]?.sets?.length)
+    .sort((a,b)=> new Date(a.datum)-new Date(b.datum))
+    .map(s=>({ datum:s.datum, y:Math.max(...s.oefeningen[progOef].sets.map(x=>x.kg)) }));
+
+  let kaart;
+  if(!data.length){
+    kaart = `<div class="kaart"><div style="text-align:center;color:var(--st);padding:28px 10px;font-size:14px;line-height:1.6">Nog geen data voor deze oefening.<br>Log 'm een paar keer en je ziet je progressie hier.</div></div>`;
+  } else {
+    const ys = data.map(d=>d.y);
+    const nu = ys[ys.length-1], max = Math.max(...ys), groei = Math.round((nu-ys[0])*10)/10;
+    kaart = `<div class="kaart">
+      <div class="stats">
+        <div><div class="g">${nu}<small> kg</small></div><div class="l">Nu</div></div>
+        <div><div class="g">${max}<small> kg</small></div><div class="l">Hoogste</div></div>
+        <div><div class="g">${groei>=0?"+":""}${groei}<small> kg</small></div><div class="l">Groei</div></div>
+      </div>
+      ${data.length>1 ? grafiek(data) : `<div style="text-align:center;color:var(--st);padding:24px;font-size:13px">Log 'm nog een keer voor een grafiek</div>`}
+      <div style="font-size:11.5px;color:var(--st);text-align:center;margin-top:7px">${data.length} sessie(s) · zwaarste set per training</div>
+    </div>`;
+  }
+  return `<div class="titel">Progressie per oefening</div>
+    <select class="sel" onchange="progOef=this.value;toon()">${opties}</select>${kaart}`;
+}
+function grafiek(data){
+  const W=460,H=150,p=26;
+  const ys=data.map(d=>d.y);
+  let mn=Math.min(...ys), mx=Math.max(...ys);
+  if(mn===mx){ mn-=2.5; mx+=2.5; }
+  const m=(mx-mn)*.18; mn-=m; mx+=m;
+  const X=i=> data.length===1 ? W/2 : p+(i/(data.length-1))*(W-2*p);
+  const Y=v=> H-p-((v-mn)/(mx-mn))*(H-2*p);
+  const pts=data.map((d,i)=>`${X(i)},${Y(d.y)}`).join(" ");
+  const dots=data.map((d,i)=>`<circle cx="${X(i)}" cy="${Y(d.y)}" r="3.6" fill="#FF6B1A"/>`).join("");
+  const labs=data.map((d,i)=>{
+    if(data.length>6 && i%2 && i!==data.length-1) return "";
+    return `<text x="${X(i)}" y="${H-7}" fill="#8A94A0" font-size="9.5" text-anchor="middle">${fmtKort(d.datum)}</text>`;
+  }).join("");
+  return `<svg class="gr" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+    <polyline points="${pts}" fill="none" stroke="#FF6B1A" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}${labs}</svg>`;
+}
+
+/* ---------- Meer ---------- */
+function rMeer(){
+  const bk = localStorage.getItem(K.bk);
+  return `
+  <div class="titel">Beheer</div>
+  <div class="beheer-oef" onclick="mTrainingen()"><div class="info"><div class="n">Trainingen beheren</div><div class="d">Naam wijzigen, toevoegen, verwijderen</div></div><div class="mini">›</div></div>
+  <div class="beheer-oef" onclick="mOefeningen()"><div class="info"><div class="n">Oefeningen beheren</div><div class="d">Toevoegen, wijzigen, volgorde, verwijderen</div></div><div class="mini">›</div></div>
+
+  <div class="titel" style="margin-top:20px">Historie</div>
+  <div class="beheer-oef" onclick="mHistorie()"><div class="info"><div class="n">Opgeslagen trainingen</div><div class="d">${sessies.length} sessie(s) · bekijken, bewerken, verwijderen</div></div><div class="mini">›</div></div>
+
+  <div class="titel" style="margin-top:20px">Data</div>
+  <div class="beheer-oef" onclick="mImport()"><div class="info"><div class="n">Schema importeren</div><div class="d">Plak een schema dat je hebt gekregen</div></div><div class="mini">›</div></div>
+  <div class="beheer-oef" onclick="exporteer()"><div class="info"><div class="n">Back-up opslaan</div><div class="d">${bk ? "Laatste: "+geleden(bk) : "⚠ Nog geen back-up gemaakt"}</div></div><div class="mini">↓</div></div>
+  <div class="beheer-oef" onclick="document.getElementById('impFile').click()"><div class="info"><div class="n">Back-up terugzetten</div><div class="d">Alles herstellen uit een back-upbestand</div></div><div class="mini">↑</div></div>
+  <input type="file" id="impFile" accept=".json" style="display:none" onchange="importBestand(this)">
+
+  <div class="leeg" style="padding:20px 12px;font-size:12.5px">Je data staat op dit apparaat. Maak af en toe een back-up — dan kun je alles terugzetten op een nieuwe telefoon.</div>`;
+}
+
+/* ---------- Modal ---------- */
+function openModal(html){
+  document.getElementById("modalIn").innerHTML = html;
+  document.getElementById("modal").classList.remove("dicht");
+}
+function sluitModal(){ document.getElementById("modal").classList.add("dicht"); }
+document.getElementById("modal").addEventListener("click", e=>{ if(e.target.id==="modal") sluitModal(); });
+
+/* --- Trainingen beheren --- */
+function mTrainingen(){
+  let h = `<h3>Trainingen</h3>`;
+  schema.trainingen.forEach((t,i)=>{
+    h += `<div class="beheer-oef">
+      <div class="info"><div class="n">${esc(t.naam)}</div><div class="d">${t.oefeningen.length} oefening(en)</div></div>
+      <button class="mini" onclick="verplaatsTr(${i},-1)" ${i===0?"disabled style=opacity:.3":""}>↑</button>
+      <button class="mini" onclick="verplaatsTr(${i},1)" ${i===schema.trainingen.length-1?"disabled style=opacity:.3":""}>↓</button>
+      <button class="mini" onclick="hernoemTr('${t.id}')">✎</button>
+      <button class="mini gev" onclick="wisTr('${t.id}')">×</button>
+    </div>`;
+  });
+  h += `<button class="primair" style="margin-top:14px" onclick="nieuweTr()">+ Training toevoegen</button>
+        <div class="modal-knop"><button class="m-nee" onclick="sluitModal()">Sluiten</button></div>`;
+  openModal(h);
+}
+function nieuweTr(){
+  const naam = prompt("Naam van de training:", "");
+  if(!naam || !naam.trim()) return;
+  const id = "tr" + Date.now().toString(36);
+  schema.trainingen.push({ id, naam:naam.trim(), oefeningen:[] });
+  bewaarSchema(); mTrainingen(); toon();
+}
+function hernoemTr(id){
+  const t = schema.trainingen.find(x=>x.id===id); if(!t) return;
+  const naam = prompt("Nieuwe naam:", t.naam);
+  if(!naam || !naam.trim()) return;
+  t.naam = naam.trim(); bewaarSchema(); mTrainingen(); toon();
+}
+function wisTr(id){
+  const t = schema.trainingen.find(x=>x.id===id); if(!t) return;
+  if(!confirm(`"${t.naam}" verwijderen?\n\nJe opgeslagen sessies blijven bewaard.`)) return;
+  schema.trainingen = schema.trainingen.filter(x=>x.id!==id);
+  bewaarSchema(); mTrainingen(); toon();
+}
+function verplaatsTr(i, d){
+  const j = i+d; if(j<0 || j>=schema.trainingen.length) return;
+  [schema.trainingen[i], schema.trainingen[j]] = [schema.trainingen[j], schema.trainingen[i]];
+  bewaarSchema(); mTrainingen(); toon();
+}
+
+/* --- Oefeningen beheren --- */
+let beheerTr = null;
+function mOefeningen(trId){
+  beheerTr = trId || actieveTraining || schema.trainingen[0]?.id;
+  const tr = schema.trainingen.find(t=>t.id===beheerTr);
+  if(!tr){ toast("Maak eerst een training aan", true); return; }
+
+  let h = `<h3>Oefeningen</h3>
+  <div class="veldje"><label>Training</label>
+    <select onchange="mOefeningen(this.value)">
+      ${schema.trainingen.map(t=>`<option value="${t.id}" ${t.id===beheerTr?"selected":""}>${esc(t.naam)}</option>`).join("")}
+    </select></div>`;
+
+  if(!tr.oefeningen.length){
+    h += `<div class="leeg" style="padding:22px">Nog geen oefeningen.</div>`;
+  } else {
+    tr.oefeningen.forEach((o,i)=>{
+      h += `<div class="beheer-oef">
+        <div class="info">
+          <div class="n">${esc(o.naam)}${o.superset?` <span style="color:var(--or);font-size:11px">SS ${esc(o.superset)}</span>`:""}</div>
+          <div class="d">${esc(o.doel||"")} · rust ${o.rust||90}s</div>
+        </div>
+        <button class="mini" onclick="verplaatsOef(${i},-1)" ${i===0?"disabled style=opacity:.3":""}>↑</button>
+        <button class="mini" onclick="verplaatsOef(${i},1)" ${i===tr.oefeningen.length-1?"disabled style=opacity:.3":""}>↓</button>
+        <button class="mini" onclick="bewerkOef('${o.id}')">✎</button>
+        <button class="mini gev" onclick="wisOef('${o.id}')">×</button>
+      </div>`;
+    });
+  }
+  h += `<button class="primair" style="margin-top:12px" onclick="bewerkOef(null)">+ Oefening toevoegen</button>
+        <div class="modal-knop"><button class="m-nee" onclick="sluitModal()">Sluiten</button></div>`;
+  openModal(h);
+}
+function bewerkOef(oefId){
+  const tr = schema.trainingen.find(t=>t.id===beheerTr);
+  const o = oefId ? tr.oefeningen.find(x=>x.id===oefId) : null;
+  openModal(`
+    <h3>${o?"Oefening wijzigen":"Nieuwe oefening"}</h3>
+    <div class="veldje"><label>Naam</label><input type="text" id="oNaam" value="${esc(o?.naam||"")}" placeholder="bv. Squat"></div>
+    <div class="veldje"><label>Doel (sets × reps)</label><input type="text" id="oDoel" value="${esc(o?.doel||"")}" placeholder="bv. 3 × 8–10"></div>
+    <div class="veldje"><label>Aantal invulrijen</label><input type="number" id="oSets" value="${o?.sets||3}" min="1" max="10"></div>
+    <div class="veldje"><label>Rust (seconden)</label><input type="number" id="oRust" value="${o?.rust||90}" min="15" max="600" step="15"></div>
+    <div class="veldje"><label>Superset (leeg = geen)</label><input type="text" id="oSS" value="${esc(o?.superset||"")}" placeholder="A, B, …" maxlength="2"></div>
+    <div class="modal-knop">
+      <button class="m-nee" onclick="mOefeningen(beheerTr)">Terug</button>
+      <button class="m-ok" onclick="bewaarOef(${oefId?`'${oefId}'`:"null"})">Opslaan</button>
+    </div>`);
+}
+function bewaarOef(oefId){
+  const tr = schema.trainingen.find(t=>t.id===beheerTr);
+  const naam = document.getElementById("oNaam").value.trim();
+  if(!naam){ toast("Vul een naam in", true); return; }
+  const doel = document.getElementById("oDoel").value.trim();
+  const sets = Math.max(1, parseInt(document.getElementById("oSets").value)||3);
+  const rust = Math.max(15, parseInt(document.getElementById("oRust").value)||90);
+  const ss = document.getElementById("oSS").value.trim().toUpperCase();
+
+  if(oefId){
+    const o = tr.oefeningen.find(x=>x.id===oefId);
+    o.naam=naam; o.doel=doel; o.sets=sets; o.rust=rust;
+    if(ss) o.superset=ss; else delete o.superset;
+    // id blijft gelijk → historie behouden
+  } else {
+    const o = { id:uid(naam), naam, doel, sets, rust };
+    if(ss) o.superset=ss;
+    tr.oefeningen.push(o);
+  }
+  bewaarSchema(); mOefeningen(beheerTr); toon();
+  toast("Opgeslagen ✓");
+}
+function wisOef(oefId){
+  const tr = schema.trainingen.find(t=>t.id===beheerTr);
+  const o = tr.oefeningen.find(x=>x.id===oefId);
+  if(!confirm(`"${o.naam}" verwijderen?\n\nJe opgeslagen sets van deze oefening blijven in je historie bewaard.`)) return;
+  tr.oefeningen = tr.oefeningen.filter(x=>x.id!==oefId);
+  bewaarSchema(); mOefeningen(beheerTr); toon();
+}
+function verplaatsOef(i,d){
+  const tr = schema.trainingen.find(t=>t.id===beheerTr);
+  const j=i+d; if(j<0||j>=tr.oefeningen.length) return;
+  [tr.oefeningen[i], tr.oefeningen[j]] = [tr.oefeningen[j], tr.oefeningen[i]];
+  bewaarSchema(); mOefeningen(beheerTr); toon();
+}
+
+/* --- Historie --- */
+function mHistorie(){
+  let h = `<h3>Opgeslagen trainingen</h3>`;
+  if(!sessies.length){
+    h += `<div class="leeg" style="padding:26px">Nog geen trainingen opgeslagen.</div>`;
+  } else {
+    const g = [...sessies].sort((a,b)=> new Date(b.datum)-new Date(a.datum));
+    h += g.map(s=>{
+      const tr = schema.trainingen.find(t=>t.id===s.training);
+      const oefHtml = Object.entries(s.oefeningen).map(([id,d])=>{
+        if(!d.sets?.length) return "";
+        const st = d.sets.map(x=>`${x.kg}kg×${x.reps}`).join(" · ");
+        const nt = d.notitie ? `<br><span class="note">📝 ${esc(d.notitie)}</span>` : "";
+        return `<div class="hist-oef"><span class="n">${esc(oefNaam(id))}</span><br><span class="s">${st}</span>${nt}</div>`;
+      }).join("");
+      return `<div class="hist">
+        <div class="hist-kop" onclick="this.parentElement.classList.toggle('open')">
+          <div class="hist-n">${esc(tr?tr.naam:"Training")}</div>
+          <div class="hist-d">${fmtKort(s.datum)}</div>
+        </div>
+        <div class="hist-body">
+          ${oefHtml || `<div class="hist-oef s">Geen sets</div>`}
+          <div class="acties">
+            <button class="secundair" onclick="startBewerk('${s.datum}')">✎ Bewerken</button>
+            <button class="secundair gevaar" onclick="wisSessie('${s.datum}')">Verwijderen</button>
+          </div>
+        </div></div>`;
+    }).join("");
+  }
+  h += `<div class="modal-knop"><button class="m-nee" onclick="sluitModal()">Sluiten</button></div>`;
+  openModal(h);
+}
+function startBewerk(datum){
+  const s = sessies.find(x=>x.datum===datum); if(!s) return;
+  bewerkDatum = datum;
+  actieveTraining = s.training;
+  sluitModal(); ga("training");
+}
+function wisSessie(datum){
+  if(!confirm("Deze sessie verwijderen?")) return;
+  sessies = sessies.filter(s=>s.datum!==datum);
+  bewaarSess(); mHistorie(); toon();
+}
+
+/* --- Import / Export --- */
+function mImport(){
+  openModal(`
+    <h3>Schema importeren</h3>
+    <div class="veldje">
+      <label>Plak hier je schema</label>
+      <textarea id="impTxt" placeholder='{"trainingen": [...]}'></textarea>
+      <div class="hulp">Dit vervangt alleen je <b>schema</b> (trainingen en oefeningen). Je opgeslagen sessies, gewichten en historie blijven bewaard.</div>
+    </div>
+    <div class="modal-knop">
+      <button class="m-nee" onclick="sluitModal()">Annuleren</button>
+      <button class="m-ok" onclick="doeImport()">Importeren</button>
+    </div>`);
+}
+function doeImport(){
+  const t = document.getElementById("impTxt").value.trim();
+  if(!t){ toast("Plak eerst een schema", true); return; }
+  let d;
+  try{ d = JSON.parse(t); }catch(e){ toast("Ongeldige tekst — kopieer het hele blok", true); return; }
+  const nieuw = d.schema || d;
+  if(!nieuw.trainingen || !Array.isArray(nieuw.trainingen)){ toast("Geen geldig schema gevonden", true); return; }
+  for(const tr of nieuw.trainingen){
+    if(!tr.id || !tr.naam || !Array.isArray(tr.oefeningen)){ toast("Schema is niet compleet", true); return; }
+  }
+  if(!confirm(`Schema met ${nieuw.trainingen.length} training(en) importeren?\n\nJe historie en gewichten blijven bewaard.`)) return;
+  schema = nieuw;
+  actieveTraining = schema.trainingen[0]?.id || null;
+  bewaarSchema();
+  // sessies/gewichten meenemen als ze in het bestand zitten en je nog niks hebt
+  if(d.sessies && Array.isArray(d.sessies) && !sessies.length){ sessies = d.sessies; bewaarSess(); }
+  if(d.gewichten && Array.isArray(d.gewichten) && !gewichten.length){ gewichten = d.gewichten; bewaarGew(); }
+  sluitModal(); ga("training"); toast("Schema geïmporteerd ✓");
+}
+function exporteer(){
+  const data = { versie:3, schema, sessies, gewichten, export:new Date().toISOString() };
+  const b = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+  const u = URL.createObjectURL(b), a = document.createElement("a");
+  const d = new Date();
+  a.href=u; a.download=`training-backup-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
+  a.click(); URL.revokeObjectURL(u);
+  localStorage.setItem(K.bk, new Date().toISOString());
+  toast("Back-up opgeslagen ✓"); setTimeout(toon, 600);
+}
+function importBestand(inp){
+  const f = inp.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const d = JSON.parse(r.result);
+      const ns = Array.isArray(d) ? d : d.sessies;
+      if(!Array.isArray(ns)) throw new Error();
+      if(!confirm(`Back-up met ${ns.length} sessie(s) terugzetten?\n\nDit vervangt je huidige data.`)) return;
+      sessies = ns.map(s => s.training ? s : ({ datum:s.datum, training: s.dag==="donderdag"?"dag2":"dag1", oefeningen:s.oefeningen }));
+      if(d.schema?.trainingen) { schema = d.schema; actieveTraining = schema.trainingen[0]?.id; bewaarSchema(); }
+      if(Array.isArray(d.gewichten)) { gewichten = d.gewichten; bewaarGew(); }
+      bewaarSess(); ga("training"); toast("Back-up teruggezet ✓");
+    }catch(e){ toast("Dit is geen geldige back-up", true); }
+  };
+  r.readAsText(f); inp.value="";
+}
+
+/* ========== START ========== */
+laad();
+toon();
+
+/* ========== PWA ========== */
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+let ip=null;
+window.addEventListener("beforeinstallprompt", e=>{ e.preventDefault(); ip=e; document.getElementById("installKnop").style.display="block"; });
+function installeerApp(){ if(!ip) return; ip.prompt(); ip.userChoice.then(()=>{ ip=null; document.getElementById("installKnop").style.display="none"; }); }
+window.addEventListener("appinstalled", ()=>{ document.getElementById("installKnop").style.display="none"; });
+</script>
+</body>
+</html>
